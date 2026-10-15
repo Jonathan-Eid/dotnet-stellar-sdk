@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+
+- The SDK's default HTTP clients (`Server`, `StellarRpcServer`, `DefaultStellarSdkHttpClient`, the SEP clients and
+  `Link.Follow()`) now send `Accept-Encoding: gzip, deflate` and transparently decompress responses. Horizon serves
+  large list pages compressed when asked, typically 5-10x smaller. An `HttpClient` or inner handler you supply is
+  used as is; set its `AutomaticDecompression` to opt in.
+
 ## [16.0.0] - 2026-10-03
 
 > **Major release; recompile required.** Protocol 27 (CAP-71) Soroban authorization, now defaulting to
