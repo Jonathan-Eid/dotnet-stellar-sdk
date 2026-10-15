@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 
@@ -42,8 +43,9 @@ public class DefaultStellarSdkHttpClient : HttpClient
     /// </param>
     /// <param name="innerHandler">
     ///     Optional inner HTTP message handler. If null, defaults to <c>SocketsHttpHandler</c> on .NET 8 and later,
-    ///     and to <see cref="HttpClientHandler" /> on netstandard2.1.
-    ///     Use this to inject a custom handler for testing, proxies, or custom certificate handling.
+    ///     and to <see cref="HttpClientHandler" /> on netstandard2.1, with gzip/deflate response decompression enabled.
+    ///     Use this to inject a custom handler for testing, proxies, or custom certificate handling; a custom handler
+    ///     is used as is, so set its <c>AutomaticDecompression</c> if you want compressed responses.
     /// </param>
     public DefaultStellarSdkHttpClient(
         string? bearerToken = null,
@@ -67,24 +69,35 @@ public class DefaultStellarSdkHttpClient : HttpClient
         }
     }
 
+    /// <summary>
+    ///     Creates the SDK's default transport handler: <c>SocketsHttpHandler</c> on .NET 8 and later, and
+    ///     <see cref="HttpClientHandler" /> on netstandard2.1. It sends <c>Accept-Encoding: gzip, deflate</c> and
+    ///     transparently decompresses responses, which Horizon and Stellar RPC serve compressed when asked.
+    /// </summary>
+    /// <param name="allowAutoRedirect">Whether the handler follows HTTP redirects.</param>
+    internal static HttpMessageHandler CreateDefaultHandler(bool allowAutoRedirect = true)
+    {
+#if NET8_0_OR_GREATER
+        return new SocketsHttpHandler
+        {
+            AllowAutoRedirect = allowAutoRedirect,
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+        };
+#else
+        // SocketsHttpHandler is not available on netstandard2.1 reference assemblies.
+        return new HttpClientHandler
+        {
+            AllowAutoRedirect = allowAutoRedirect,
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+        };
+#endif
+    }
+
     private static HttpMessageHandler CreateHandlerPipeline(
         HttpResilienceOptions? resilienceOptions,
         HttpMessageHandler? innerHandler)
     {
-        HttpMessageHandler handler;
-        if (innerHandler != null)
-        {
-            handler = innerHandler;
-        }
-        else
-        {
-#if NET8_0_OR_GREATER
-            handler = new SocketsHttpHandler();
-#else
-            // SocketsHttpHandler is not available on netstandard2.1 reference assemblies.
-            handler = new HttpClientHandler();
-#endif
-        }
+        var handler = innerHandler ?? CreateDefaultHandler();
 
         // Add resilience handler if any resilience feature is enabled (retries, circuit breaker, or
         // timeout). Status codes alone enable nothing — see HasAnyResilienceFeatureEnabled's remarks.

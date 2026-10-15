@@ -91,7 +91,7 @@ public class StellarRpcServer : IDisposable
         "Pass your own HttpClient instance to StellarRpcServer(string uri, HttpClient httpClient) instead. Otherwise call StellarRpcServer(string uri). Will be removed in the next major version.")]
     public static HttpClient CreateHttpClient()
     {
-        return CreateHttpClient(new HttpClientHandler());
+        return CreateHttpClient(DefaultStellarSdkHttpClient.CreateDefaultHandler());
     }
 
     /// <summary>

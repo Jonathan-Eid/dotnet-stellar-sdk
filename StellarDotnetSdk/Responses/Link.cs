@@ -137,7 +137,7 @@ public class Link<TResponse> : Link where TResponse : Response
     /// </exception>
     public Task<TResponse> Follow()
     {
-        return Follow(new HttpClient());
+        return Follow(CreateHttpClient());
     }
 
     /// <summary>
@@ -151,7 +151,7 @@ public class Link<TResponse> : Link where TResponse : Response
     /// </exception>
     public Task<TResponse> Follow(object? parameters)
     {
-        return Follow(new HttpClient(), parameters);
+        return Follow(CreateHttpClient(), parameters);
     }
 
     /// <summary>
@@ -165,7 +165,12 @@ public class Link<TResponse> : Link where TResponse : Response
     /// </exception>
     public Task<TResponse> Follow(IDictionary<string, object>? parameters)
     {
-        return Follow(new HttpClient(), parameters);
+        return Follow(CreateHttpClient(), parameters);
+    }
+
+    private static HttpClient CreateHttpClient()
+    {
+        return new HttpClient(DefaultStellarSdkHttpClient.CreateDefaultHandler());
     }
 
     private async Task<TResponse> DoFollow(HttpClient httpClient, Uri uri)

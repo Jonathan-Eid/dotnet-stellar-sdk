@@ -1264,11 +1264,7 @@ public class UriScheme : IDisposable
 
     private static HttpMessageHandler CreateNonRedirectingHandler()
     {
-#if NET8_0_OR_GREATER
-        return new SocketsHttpHandler { AllowAutoRedirect = false };
-#else
-        return new HttpClientHandler { AllowAutoRedirect = false };
-#endif
+        return DefaultStellarSdkHttpClient.CreateDefaultHandler(false);
     }
 
     /// <summary>
